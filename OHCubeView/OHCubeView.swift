@@ -8,7 +8,7 @@
 //import DACircularProgress
 //import ValueAnimator
 import UIKit
-
+import ValueAnimator
 @objc public enum ShadowPosition :Int{
     case NOSide = 0
     case Left = 1

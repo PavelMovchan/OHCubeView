@@ -132,4 +132,5 @@ paging between stories has a 3D cube animation.
   # s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
   # s.dependency "JSONKit", "~> 1.4"
   s.dependency "ValueAnimator"
+  s.dependency "PromiseKit"
 end

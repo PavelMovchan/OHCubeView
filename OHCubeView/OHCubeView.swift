@@ -34,7 +34,6 @@ import ValueAnimator
     @objc public var isBeginDragging:Bool = false;
     @objc public var page:Int = 0;
 
-
     //fileprivate var displayLink:CADisplayLink = CADisplayLink.init();
     fileprivate var lastContentOffset = 0.0;
     fileprivate let maxAngle: CGFloat = 60.0;
@@ -46,14 +45,16 @@ import ValueAnimator
     @objc public var isUserInteractionGlobal:Bool = false;
 
     fileprivate var childViews = [UIView]()
+    fileprivate var unscrollableViews = [UIView]()
+    fileprivate var unscrollableViewPoints = [NSValue]()
 
-
-    fileprivate lazy var stackView: UIStackView = {
+    @objc public var stackView: UIStackView = {
 
         let sv = UIStackView()
         sv.translatesAutoresizingMaskIntoConstraints = false
         sv.axis = UILayoutConstraintAxis.horizontal
         sv.semanticContentAttribute = .forceLeftToRight
+        sv.backgroundColor = UIColor.clear
         return sv
     }()
 
@@ -79,6 +80,13 @@ import ValueAnimator
     open func getDisabledScrollCubeTo3rdView() -> Bool
     {
         return isRightScrollDisabled;
+    }
+
+    open func clearUnscrollableViews()
+    {
+        for view in unscrollableViews {
+            view.removeFromSuperview()
+        }
     }
 
     open func clearViews()
@@ -109,14 +117,11 @@ import ValueAnimator
         }
     }
 
-    open func addChildView(_ view: UIView) {
-        addChildViews([view])
-    }
-
     open func scrollToViewAtIndex(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         isUserInteractionGlobal = isUserInteraction
-        NSLog("log2 scrollToViewAtIndex noAnyChangesGlobal = %i", noAnyChangesGlobal);
+
+        NSLog("logcube 44 scrollToViewAtIndex noAnyChangesGlobal = %i", noAnyChangesGlobal);
         if index > -1 && index < childViews.count {
 
             let width = self.frame.size.width
@@ -135,40 +140,56 @@ import ValueAnimator
     open func scrollToViewAtIndexWithDecelerationAnimation(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         isUserInteractionGlobal = isUserInteraction
-        NSLog("log2 scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
+        NSLog("logcube scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
 
-        isScrolling = true
         isUserInteractionEnabled = false
+        isScrolling = true
+
         if index > -1 && index < childViews.count {
 
             let width = self.frame.size.width
             let height = self.frame.size.height
 
-            let frame = CGRect(x: CGFloat(index)*width, y: self.frame.origin.y, width: width, height: height)//CGRect(x: CGFloat(index)*width, y: 0, width: width, height: height)
+            let frame = CGRect(x: CGFloat(index)*width, y: self.frame.origin.y, width: width, height: height)
 
             let s = self.contentOffset.x;
             let f = frame.origin.x;
 
             let d = 0.18
-            ValueAnimator.frameRate = 70
+            ValueAnimator.frameRate = 90
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
             }, onEnd: {
                 self.scrollViewDidEndScrollingAnimation(self)
             })
-            
+
             animator.resume()
         }
+    }
+
+    open func addUnscrollableChildViews(_ views: [UIView], points:[NSValue]) {
+        clearUnscrollableViews()
+        unscrollableViews = views
+        unscrollableViewPoints = points
+        for view in unscrollableViews {
+            self.addSubview(view)
+        }
+    }
+
+    open func updateOnlyPoints(_ points: [NSValue]) {
+        unscrollableViewPoints = points;
+        updateUnscrollableViewItems()
     }
 
     open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         isUserInteractionGlobal = isUserInteraction
-        NSLog("log2 scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
+        NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
 
-        isScrolling = true
         isUserInteractionEnabled = false
+        isScrolling = true
+
         if index > -1 && index < childViews.count {
 
             let width = self.frame.size.width
@@ -180,7 +201,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.4
-            ValueAnimator.frameRate = 70
+            ValueAnimator.frameRate = 90
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -194,7 +215,7 @@ import ValueAnimator
 
 
     open func scrollToViewAtIndex(_ index: Int, animated: Bool) {
-        NSLog("log16 scrollToViewAtIndex start scrolling");
+        NSLog("logcube scrollToViewAtIndex start scrolling");
         isUserInteractionGlobal = false
         noAnyChangesGlobal = false
         if index > -1 && index < childViews.count {
@@ -227,7 +248,7 @@ import ValueAnimator
     open func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         var pageloc:Int = Int(scrollView.contentOffset.x / scrollView.frame.size.width);
         var noAnyChanges:Bool = page == pageloc;
-        NSLog("log2 scrollViewDidEndScrollingAnimation1 page = %i, pageloc = %i, noAnyChangesGlobal = %i", page, pageloc, noAnyChangesGlobal);
+        NSLog("logcube 22 scrollViewDidEndScrollingAnimation1 page = %i, pageloc = %i, noAnyChangesGlobal = %i", page, pageloc, noAnyChangesGlobal);
         var prePage = page;
         page = pageloc;
         var xOffset = scrollView.contentOffset.x
@@ -239,6 +260,7 @@ import ValueAnimator
         }
         noAnyChangesGlobal = noAnyChanges ? noAnyChanges : noAnyChangesGlobal;
         cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChangesGlobal, isUserInteraction: isUserInteractionGlobal, prePage: prePage);
+        updateUnscrollableViewItems();
         resetAnchorPoint()
         isScrolling = false
         isUserInteractionEnabled = true
@@ -251,7 +273,7 @@ import ValueAnimator
         noAnyChangesGlobal = true
         var pageloc:Int = Int(scrollView.contentOffset.x / scrollView.frame.size.width);
         var noAnyChanges:Bool = page == pageloc;
-        NSLog("log2 scrollViewDidEndDecelerating1 x = %f width = %f, noAnyChangesGlobal = %i", scrollView.contentOffset.x, scrollView.frame.size.width, noAnyChangesGlobal);
+        NSLog("logcube 33 scrollViewDidEndDecelerating1 x = %f width = %f, noAnyChangesGlobal = %i", scrollView.contentOffset.x, scrollView.frame.size.width, noAnyChangesGlobal);
         var prePage = page;
         page = pageloc;
         var xOffset = scrollView.contentOffset.x
@@ -263,6 +285,7 @@ import ValueAnimator
         }
         isUserInteractionGlobal = true
         cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChanges, isUserInteraction: isUserInteractionGlobal, prePage: prePage)
+        updateUnscrollableViewItems()
         resetAnchorPoint()
         isScrolling = false
         isUserInteractionEnabled = true
@@ -280,30 +303,10 @@ import ValueAnimator
     }
 
     open func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-
+        isBeginDragging = false
     }
 
     open func scrollViewDidScroll(_ scrollView: UIScrollView) {
-
-        //noAnyChangesGlobal = true
-        //NSLog("log16 %f", scrollView.contentOffset.x);
-
-        //#warnigng test
-        /*var location = self.panGestureRecognizer.location(in: self);//[scrollView.panGestureRecognizer locationInView:scrollView];
-        var endcofs = abs(startContentOffset - scrollView.contentOffset.x);
-        NSLog("scrollViewWillBeginDragging = %@",NSStringFromCGPoint(location));
-        NSLog("scrollViewWillBeginDragging = %@",NSStringFromCGPoint(startPoint));
-        var diff:CGFloat = (abs(startPoint.y - location.y) - (abs(startPoint.x - location.x)+endcofs));
-        NSLog("scrollViewWillBeginDragging = %f",diff);
-        var svWidth = self.frame.width
-        if (diff > 0) {
-            NSLog("scrollViewWillBeginDragging stop");
-            //isScrollEnabled = false
-            // isScrollEnabled = true
-            resetScroll(scrollView);
-        }*/
-        //end test
-
         isScrolling = true
         transformViewsInScrollView(scrollView)
         var isr = false;
@@ -327,21 +330,12 @@ import ValueAnimator
 
     open func resetAnchorPoint()
     {
-
-        var xOffset = self.contentOffset.x
-        var svWidth = self.frame.width
         let childc = Int(childViews.count)
-
-        xOffset = self.contentOffset.x
-        svWidth = self.frame.width
-        var deg = maxAngle / bounds.size.width * xOffset
-
         for index in 0 ..< childc {
 
             let view = childViews[index]
             view.transform = .identity
             setAnchorPoint(CGPoint(x: 0.5, y: 0.5), forView: view)
-
         }
     }
 
@@ -349,12 +343,14 @@ import ValueAnimator
 
     fileprivate func configureScrollView() {
 
-        backgroundColor = UIColor.black
+        backgroundColor = UIColor.clear
         showsHorizontalScrollIndicator = false
         showsVerticalScrollIndicator = false
         isPagingEnabled = true
         bounces = false
         delegate = self
+        canCancelContentTouches = false
+        delaysContentTouches = true
         //self.semanticContentAttribute = .forceRightToLeft
         if #available(iOS 11.0, *) {
             contentInsetAdjustmentBehavior = .never
@@ -424,6 +420,17 @@ import ValueAnimator
         )
     }
 
+    open func updateUnscrollableViewItems()
+    {
+        var xOffset = self.contentOffset.x
+        let len =  unscrollableViews.count
+        for i in 0 ..< len {
+            let view = unscrollableViews[i]
+            let point = unscrollableViewPoints[i].cgPointValue
+            view.frame = CGRect(x: point.x + xOffset, y: point.y, width: view.frame.size.width, height: view.frame.size.height);
+        }
+    }
+
     fileprivate func transformViewsInScrollView(_ scrollView: UIScrollView) {
 
         var xOffset = scrollView.contentOffset.x
@@ -433,7 +440,7 @@ import ValueAnimator
         xOffset = scrollView.contentOffset.x
         svWidth = scrollView.frame.width
         var deg = maxAngle / bounds.size.width * xOffset
-
+        updateUnscrollableViewItems()
 
         for index in 0 ..< childViews.count {
 
@@ -443,16 +450,12 @@ import ValueAnimator
             let rad = deg * CGFloat(Double.pi / 180)
 
             var transform = CATransform3DIdentity
-            transform.m34 = 1 / 500
+            transform.m34 = 1 / svWidth
             transform = CATransform3DRotate(transform, rad, 0, 1, 0)
 
             view.layer.transform = transform
 
             var x = xOffset / svWidth > CGFloat(index) ? 1.0 : 0.0
-            if(!animationEnabled)
-            {
-                //x = 0.5
-            }
 
             setAnchorPoint(CGPoint(x: x, y: 0.5), forView: view)
 
@@ -474,7 +477,6 @@ import ValueAnimator
             let unionArea = union.size.width*union.size.height
             let multiplier = 1.0;
             let opac = ((intersection.size.width*0.75) / self.frame.size.width) + 0.25;
-            //NSLog("ffff----- %f", Float(opac));
             view.layer.opacity = Float(opac);
         }
 
@@ -492,7 +494,7 @@ import ValueAnimator
         }
     }
 
-    
+
     fileprivate func setAnchorPoint(_ anchorPoint: CGPoint, forView view: UIView) {
 
         var newPoint = CGPoint(x: view.bounds.size.width * anchorPoint.x, y: view.bounds.size.height * anchorPoint.y)

@@ -20,8 +20,10 @@ import ValueAnimator
 @available(iOS 9.0, *)
 @objc public protocol OHCubeViewDelegate: class {
     @objc optional func cubeViewDidScroll(_ cubeView: OHCubeView, isr:Bool)
-    @objc optional func cubeViewDidEndDecelerating(_ cubeView: OHCubeView, noAnyChanges:Bool, isUserInteraction:Bool, prePage:Int)
+    @objc optional func cubeViewDidEndDecelerating(_ cubeView: OHCubeView, noAnyChanges:Bool, prePage:Int)
     @objc optional func cubeViewWillBeginDragging(_ cubeView: OHCubeView)
+    @objc optional func cubeViewWillEndDragging(_ cubeView: OHCubeView)
+    @objc optional func cubeViewWillResetScroll(_ cubeView: OHCubeView, noAnyChanges:Bool)
 }
 
 @available(iOS 9.0, *)
@@ -29,12 +31,13 @@ import ValueAnimator
 
     @objc weak public var cubeDelegate: OHCubeViewDelegate?;
     @objc public var shadowType:ShadowPosition = ShadowPosition.NOSide;
-    @objc public var animationEnabled:Bool = true;
-    @objc public var isScrolling:Bool = false;
-    @objc public var isBeginDragging:Bool = false;
     @objc public var page:Int = 0;
 
-    //fileprivate var displayLink:CADisplayLink = CADisplayLink.init();
+    @objc public var endScrolledWithFinger = false;
+    @objc public var isScrolling = false;
+    @objc public var forceScrollingEnabled:Bool = false;
+    @objc public var animationDuration = 0.3;
+    @objc public var prePage = 0;
     fileprivate var lastContentOffset = 0.0;
     fileprivate let maxAngle: CGFloat = 60.0;
     fileprivate var startPoint : CGPoint = CGPoint(x: 0, y: 0);
@@ -42,7 +45,6 @@ import ValueAnimator
 
     fileprivate var isRightScrollDisabled:Bool = false;
     fileprivate var noAnyChangesGlobal:Bool = true;
-    @objc public var isUserInteractionGlobal:Bool = false;
 
     fileprivate var childViews = [UIView]()
     fileprivate var unscrollableViews = [UIView]()
@@ -119,8 +121,7 @@ import ValueAnimator
 
     open func scrollToViewAtIndex(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
-        isUserInteractionGlobal = isUserInteraction
-
+        isScrolling = true
         NSLog("logcube 44 scrollToViewAtIndex noAnyChangesGlobal = %i", noAnyChangesGlobal);
         if index > -1 && index < childViews.count {
 
@@ -139,11 +140,7 @@ import ValueAnimator
 
     open func scrollToViewAtIndexWithDecelerationAnimation(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
-        isUserInteractionGlobal = isUserInteraction
         NSLog("logcube scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
-
-        isUserInteractionEnabled = false
-        isScrolling = true
 
         if index > -1 && index < childViews.count {
 
@@ -182,13 +179,10 @@ import ValueAnimator
         updateUnscrollableViewItems()
     }
 
+
     open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
-        isUserInteractionGlobal = isUserInteraction
         NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
-
-        isUserInteractionEnabled = false
-        isScrolling = true
 
         if index > -1 && index < childViews.count {
 
@@ -200,9 +194,37 @@ import ValueAnimator
             let s = self.contentOffset.x;
             let f = frame.origin.x;
 
-            let d = 0.4
+            let d = 0.3
             ValueAnimator.frameRate = 90
-            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
+            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
+                self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
+                self.transformViewsInScrollView(self)
+            }, onEnd: {
+                self.scrollViewDidEndScrollingAnimation(self)
+            })
+
+            animator.resume()
+        }
+    }
+
+    open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool, withForceScrolling:Bool) {
+        noAnyChangesGlobal = noAnyChanges
+        forceScrollingEnabled = withForceScrolling;
+        NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
+
+        if index > -1 && index < childViews.count {
+
+            let width = self.frame.size.width
+            let height = self.frame.size.height
+
+            let frame = CGRect(x: CGFloat(index)*width, y:self.frame.origin.y, width: width, height: height)//CGRect(x: CGFloat(index)*width, y: 0, width: width, height: height)
+
+            let s = self.contentOffset.x;
+            let f = frame.origin.x;
+
+            let d = 0.3
+            ValueAnimator.frameRate = 90
+            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
             }, onEnd: {
@@ -216,14 +238,14 @@ import ValueAnimator
 
     open func scrollToViewAtIndex(_ index: Int, animated: Bool) {
         NSLog("logcube scrollToViewAtIndex start scrolling");
-        isUserInteractionGlobal = false
         noAnyChangesGlobal = false
+        isScrolling = true
         if index > -1 && index < childViews.count {
 
             let width = self.frame.size.width
             let height = self.frame.size.height
 
-            let frame = CGRect(x: CGFloat(index)*width, y: self.frame.origin.y, width: width, height: height)//CGRect(x: CGFloat(index)*width, y: 0, width: width, height: height)
+            let frame = CGRect(x: CGFloat(index)*width, y: self.frame.origin.y, width: width, height: height)
             scrollRectToVisible(frame, animated: animated);
         }
     }
@@ -234,13 +256,14 @@ import ValueAnimator
         var svWidth = scrollView.frame.width
         let childc = Int(childViews.count)
         if (xOffset >= svWidth) {
-            //NSLog("log16 resetScroll");
             let width = self.frame.size.width
             let height = self.frame.size.height
 
-            let frame = CGRect(x: width, y: self.frame.origin.y, width: width, height: height)//CGRect(x: width, y: 0, width: width, height: height)
+            let frame = CGRect(x: width, y: self.frame.origin.y, width: width, height: height)
             scrollRectToVisible(frame, animated: false)
-            //page = 1;
+            var pageloc:Int = Int(scrollView.contentOffset.x / scrollView.frame.size.width);
+            var noAnyChanges:Bool = page == pageloc;
+            cubeDelegate?.cubeViewWillResetScroll?(self, noAnyChanges: noAnyChanges);
         }
     }
 
@@ -249,7 +272,6 @@ import ValueAnimator
         var pageloc:Int = Int(scrollView.contentOffset.x / scrollView.frame.size.width);
         var noAnyChanges:Bool = page == pageloc;
         NSLog("logcube 22 scrollViewDidEndScrollingAnimation1 page = %i, pageloc = %i, noAnyChangesGlobal = %i", page, pageloc, noAnyChangesGlobal);
-        var prePage = page;
         page = pageloc;
         var xOffset = scrollView.contentOffset.x
         var svWidth = scrollView.frame.width
@@ -259,22 +281,22 @@ import ValueAnimator
             page = 1;
         }
         noAnyChangesGlobal = noAnyChanges ? noAnyChanges : noAnyChangesGlobal;
-        cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChangesGlobal, isUserInteraction: isUserInteractionGlobal, prePage: prePage);
+        forceScrollingEnabled = false
+        cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChangesGlobal, prePage: prePage);
         updateUnscrollableViewItems();
         resetAnchorPoint()
+        endScrolledWithFinger = false
         isScrolling = false
-        isUserInteractionEnabled = true
-        isBeginDragging = false
+        prePage = page;
     }
 
     open func scrollViewDidEndDecelerating(_ scrollView: UIScrollView)
     {
-        isBeginDragging = false
         noAnyChangesGlobal = true
         var pageloc:Int = Int(scrollView.contentOffset.x / scrollView.frame.size.width);
         var noAnyChanges:Bool = page == pageloc;
         NSLog("logcube 33 scrollViewDidEndDecelerating1 x = %f width = %f, noAnyChangesGlobal = %i", scrollView.contentOffset.x, scrollView.frame.size.width, noAnyChangesGlobal);
-        var prePage = page;
+
         page = pageloc;
         var xOffset = scrollView.contentOffset.x
         var svWidth = scrollView.frame.width
@@ -283,45 +305,39 @@ import ValueAnimator
             scrollView.contentOffset = CGPoint(x: (svWidth), y: 0)
             page = 1;
         }
-        isUserInteractionGlobal = true
-        cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChanges, isUserInteraction: isUserInteractionGlobal, prePage: prePage)
+        cubeDelegate?.cubeViewDidEndDecelerating?(self, noAnyChanges: noAnyChanges, prePage: prePage)
         updateUnscrollableViewItems()
         resetAnchorPoint()
+        endScrolledWithFinger = false
         isScrolling = false
-        isUserInteractionEnabled = true
+        prePage = page;
     }
 
     open func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
 
-        var location = self.panGestureRecognizer.location(in: self);//[scrollView.panGestureRecognizer locationInView:scrollView];
+        var location = self.panGestureRecognizer.location(in: self);
         startPoint = location;
         startContentOffset = contentOffset.x;
-        isBeginDragging = true
-        isUserInteractionGlobal = true
-        isScrolling = true
+        endScrolledWithFinger = true
         cubeDelegate?.cubeViewWillBeginDragging?(self);
     }
 
     open func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
-        isBeginDragging = false
+        cubeDelegate?.cubeViewWillEndDragging?(self);
+    }
+    open func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool){
+        cubeDelegate?.cubeViewWillEndDragging?(self);
     }
 
     open func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        isScrolling = true
         transformViewsInScrollView(scrollView)
-        var isr = false;
-        if (self.lastContentOffset > Double(scrollView.contentOffset.x)) {
-            isr = true;
-        } else if (self.lastContentOffset < Double(scrollView.contentOffset.x)) {
-            isr = false;
-        }
+        var isr = self.lastContentOffset > Double(scrollView.contentOffset.x)
         if(!isr && isRightScrollDisabled)
         {
-            resetScroll(scrollView);
-            isScrolling = false
-        }else
-        {
-
+            if(!forceScrollingEnabled)
+            {
+                resetScroll(scrollView);
+            }
         }
         self.lastContentOffset = Double(scrollView.contentOffset.x);
         cubeDelegate?.cubeViewDidScroll?(self, isr: isr);
@@ -349,9 +365,6 @@ import ValueAnimator
         isPagingEnabled = true
         bounces = false
         delegate = self
-        canCancelContentTouches = false
-        delaysContentTouches = true
-        //self.semanticContentAttribute = .forceRightToLeft
         if #available(iOS 11.0, *) {
             contentInsetAdjustmentBehavior = .never
         } else {

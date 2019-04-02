@@ -37,6 +37,7 @@ import ValueAnimator
     @objc public var isScrolling = false;
     @objc public var forceScrollingEnabled:Bool = false;
     @objc public var animationDuration = 0.3;
+    @objc public var frameRate = 60;
     @objc public var prePage = 0;
     fileprivate var lastContentOffset = 0.0;
     fileprivate let maxAngle: CGFloat = 60.0;
@@ -153,7 +154,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.18
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -195,7 +196,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.3
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -223,7 +224,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.3
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)

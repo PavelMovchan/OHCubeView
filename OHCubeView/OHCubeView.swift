@@ -38,6 +38,7 @@ import ValueAnimator
     @objc public var forceScrollingEnabled:Bool = false;
     @objc public var animationDuration = 0.3;
     @objc public var prePage = 0;
+    @objc public var frameRate = 60;
     fileprivate var lastContentOffset = 0.0;
     fileprivate let maxAngle: CGFloat = 60.0;
     fileprivate var startPoint : CGPoint = CGPoint(x: 0, y: 0);
@@ -74,24 +75,24 @@ import ValueAnimator
         super.init(coder: aDecoder)
     }
 
-    open func disableScrollCubeTo3rdView(value:Bool)
+    @objc open func disableScrollCubeTo3rdView(value:Bool)
     {
         isRightScrollDisabled = value;
     }
 
-    open func getDisabledScrollCubeTo3rdView() -> Bool
+    @objc open func getDisabledScrollCubeTo3rdView() -> Bool
     {
         return isRightScrollDisabled;
     }
 
-    open func clearUnscrollableViews()
+    @objc open func clearUnscrollableViews()
     {
         for view in unscrollableViews {
             view.removeFromSuperview()
         }
     }
 
-    open func clearViews()
+    @objc open func clearViews()
     {
         childViews.removeAll()
         for subUIView in stackView.subviews as [UIView] {
@@ -99,7 +100,7 @@ import ValueAnimator
         }
     }
 
-    open func addChildViews(_ views: [UIView]) {
+    @objc open func addChildViews(_ views: [UIView]) {
 
         clearViews()
         for view in views {
@@ -119,7 +120,7 @@ import ValueAnimator
         }
     }
 
-    open func scrollToViewAtIndex(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
+    @objc open func scrollToViewAtIndex(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         isScrolling = true
         NSLog("logcube 44 scrollToViewAtIndex noAnyChangesGlobal = %i", noAnyChangesGlobal);
@@ -138,7 +139,7 @@ import ValueAnimator
         self.transformViewsInScrollView(self)
     }
 
-    open func scrollToViewAtIndexWithDecelerationAnimation(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
+    @objc open func scrollToViewAtIndexWithDecelerationAnimation(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         NSLog("logcube scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
 
@@ -153,7 +154,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.18
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -165,7 +166,7 @@ import ValueAnimator
         }
     }
 
-    open func addUnscrollableChildViews(_ views: [UIView], points:[NSValue]) {
+    @objc open func addUnscrollableChildViews(_ views: [UIView], points:[NSValue]) {
         clearUnscrollableViews()
         unscrollableViews = views
         unscrollableViewPoints = points
@@ -174,13 +175,13 @@ import ValueAnimator
         }
     }
 
-    open func updateOnlyPoints(_ points: [NSValue]) {
+    @objc open func updateOnlyPoints(_ points: [NSValue]) {
         unscrollableViewPoints = points;
         updateUnscrollableViewItems()
     }
 
 
-    open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
+    @objc open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
 
@@ -195,7 +196,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.3
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -207,7 +208,7 @@ import ValueAnimator
         }
     }
 
-    open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool, withForceScrolling:Bool) {
+    @objc open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool, withForceScrolling:Bool) {
         noAnyChangesGlobal = noAnyChanges
         forceScrollingEnabled = withForceScrolling;
         NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
@@ -223,7 +224,7 @@ import ValueAnimator
             let f = frame.origin.x;
 
             let d = 0.3
-            ValueAnimator.frameRate = 90
+            ValueAnimator.frameRate = frameRate
             let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
                 self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                 self.transformViewsInScrollView(self)
@@ -236,7 +237,7 @@ import ValueAnimator
     }
 
 
-    open func scrollToViewAtIndex(_ index: Int, animated: Bool) {
+    @objc open func scrollToViewAtIndex(_ index: Int, animated: Bool) {
         NSLog("logcube scrollToViewAtIndex start scrolling");
         noAnyChangesGlobal = false
         isScrolling = true
@@ -329,7 +330,7 @@ import ValueAnimator
         cubeDelegate?.cubeViewWillEndDragging?(self);
     }
 
-    open func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    @objc open func scrollViewDidScroll(_ scrollView: UIScrollView) {
         transformViewsInScrollView(scrollView)
         var isr = self.lastContentOffset > Double(scrollView.contentOffset.x)
         if(!isr && isRightScrollDisabled)
@@ -344,7 +345,7 @@ import ValueAnimator
     }
 
 
-    open func resetAnchorPoint()
+    @objc open func resetAnchorPoint()
     {
         let childc = Int(childViews.count)
         for index in 0 ..< childc {
@@ -433,7 +434,7 @@ import ValueAnimator
         )
     }
 
-    open func updateUnscrollableViewItems()
+    @objc open func updateUnscrollableViewItems()
     {
         var xOffset = self.contentOffset.x
         let len =  unscrollableViews.count

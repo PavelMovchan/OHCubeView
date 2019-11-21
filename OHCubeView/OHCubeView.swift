@@ -32,6 +32,7 @@ import ValueAnimator
     @objc weak public var cubeDelegate: OHCubeViewDelegate?;
     @objc public var shadowType:ShadowPosition = ShadowPosition.NOSide;
     @objc public var page:Int = 0;
+    @objc public var enableTransform = true;
     
     @objc public var endScrolledWithFinger = false;
     @objc public var isScrolling = false;
@@ -43,6 +44,7 @@ import ValueAnimator
     fileprivate let maxAngle: CGFloat = 60.0;
     fileprivate var startPoint : CGPoint = CGPoint(x: 0, y: 0);
     fileprivate var startContentOffset : CGFloat = 0;
+    fileprivate var isForceScrolling : Bool = false;
     
     fileprivate var isRightScrollDisabled:Bool = false;
     fileprivate var noAnyChangesGlobal:Bool = true;
@@ -154,15 +156,20 @@ import ValueAnimator
             let f = frame.origin.x;
             
             let d = 0.18
-            ValueAnimator.frameRate = frameRate
-            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
-                self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
-                self.transformViewsInScrollView(self)
-            }, onEnd: {
-                self.scrollViewDidEndScrollingAnimation(self)
-            })
-            
-            animator.resume()
+            if !isForceScrolling {
+                isForceScrolling = true;
+                ValueAnimator.frameRate = frameRate
+                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
+                    self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
+                    self.transformViewsInScrollView(self)
+                }, onEnd: {
+                    self.scrollViewDidEndScrollingAnimation(self)
+                    self.isForceScrolling = false;
+                })
+                
+                animator.resume()
+            }
+           
         }
     }
     
@@ -196,15 +203,20 @@ import ValueAnimator
             let f = frame.origin.x;
             
             let d = 0.3
-            ValueAnimator.frameRate = frameRate
-            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
-                self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
-                self.transformViewsInScrollView(self)
-            }, onEnd: {
-                self.scrollViewDidEndScrollingAnimation(self)
-            })
+            if !isForceScrolling {
+                ValueAnimator.frameRate = frameRate
+                isForceScrolling = true
+                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
+                    self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
+                    self.transformViewsInScrollView(self)
+                }, onEnd: {
+                    self.scrollViewDidEndScrollingAnimation(self)
+                    self.isForceScrolling = false;
+                })
+                
+                animator.resume()
+            }
             
-            animator.resume()
         }
     }
     
@@ -224,15 +236,21 @@ import ValueAnimator
             let f = frame.origin.x;
             
             let d = 0.3
-            ValueAnimator.frameRate = frameRate
-            let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
-                self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
-                self.transformViewsInScrollView(self)
-            }, onEnd: {
-                self.scrollViewDidEndScrollingAnimation(self)
-            })
+            if !isForceScrolling {
+                isForceScrolling = true
+                ValueAnimator.frameRate = frameRate
+                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
+                    self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
+                    self.transformViewsInScrollView(self)
+                }, onEnd: {
+                    self.scrollViewDidEndScrollingAnimation(self)
+                    self.isForceScrolling = false
+                })
+                
+                animator.resume()
+            }
             
-            animator.resume()
+           
         }
     }
     
@@ -446,6 +464,10 @@ import ValueAnimator
     }
     
     fileprivate func transformViewsInScrollView(_ scrollView: UIScrollView) {
+        updateUnscrollableViewItems()
+        if (!enableTransform) {
+            return
+        }
         
         var xOffset = scrollView.contentOffset.x
         var svWidth = scrollView.frame.width
@@ -454,7 +476,6 @@ import ValueAnimator
         xOffset = scrollView.contentOffset.x
         svWidth = scrollView.frame.width
         var deg = maxAngle / bounds.size.width * xOffset
-        updateUnscrollableViewItems()
         
         for index in 0 ..< childViews.count {
             

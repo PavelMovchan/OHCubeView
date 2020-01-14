@@ -144,7 +144,10 @@ import ValueAnimator
     @objc open func scrollToViewAtIndexWithDecelerationAnimation(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         NSLog("logcube scrollToViewAtIndexWithDecelerationAnimation noAnyChangesGlobal = %i", noAnyChangesGlobal);
-        
+        var d = animationDuration
+        if isSamePageWith(index) {
+            d = 0;
+        }
         if index > -1 && index < childViews.count {
             
             let width = self.frame.size.width
@@ -155,7 +158,6 @@ import ValueAnimator
             let s = self.contentOffset.x;
             let f = frame.origin.x;
             
-            let d = 0.18
             if !isForceScrolling {
                 isForceScrolling = true;
                 ValueAnimator.frameRate = frameRate
@@ -187,11 +189,18 @@ import ValueAnimator
         updateUnscrollableViewItems()
     }
     
+    private func isSamePageWith(_ index: Int) -> Bool {
+        var pageloc:Int = Int(self.contentOffset.x / self.frame.size.width);
+        return pageloc == index
+    }
     
     @objc open func scrollToViewAtIndexWithDecelerationAnimationSlow(_ index: Int, animated: Bool, noAnyChanges:Bool, isUserInteraction:Bool) {
         noAnyChangesGlobal = noAnyChanges
         NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
-        
+        var d = animationDuration
+        if isSamePageWith(index) {
+            d = 0;
+        }
         if index > -1 && index < childViews.count {
             
             let width = self.frame.size.width
@@ -202,11 +211,10 @@ import ValueAnimator
             let s = self.contentOffset.x;
             let f = frame.origin.x;
             
-            let d = 0.3
             if !isForceScrolling {
                 ValueAnimator.frameRate = frameRate
                 isForceScrolling = true
-                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
+                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                     self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                     self.transformViewsInScrollView(self)
                 }, onEnd: {
@@ -224,7 +232,10 @@ import ValueAnimator
         noAnyChangesGlobal = noAnyChanges
         forceScrollingEnabled = withForceScrolling;
         NSLog("logcube 11 scrollToViewAtIndexWithDecelerationAnimationSlow index = %i noAnyChangesGlobal = %i", index, noAnyChangesGlobal);
-        
+        var d = animationDuration
+        if isSamePageWith(index) {
+            d = 0;
+        }
         if index > -1 && index < childViews.count {
             
             let width = self.frame.size.width
@@ -235,11 +246,10 @@ import ValueAnimator
             let s = self.contentOffset.x;
             let f = frame.origin.x;
             
-            let d = 0.3
             if !isForceScrolling {
                 isForceScrolling = true
                 ValueAnimator.frameRate = frameRate
-                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: animationDuration, onChanged: { (p, v) in
+                let animator = ValueAnimator.animate(props: ["some"], from: [s], to: [f], duration: d, onChanged: { (p, v) in
                     self.scrollRectToVisible(CGRect(x: CGFloat(v.value), y: 0, width: width, height: height), animated: false)
                     self.transformViewsInScrollView(self)
                 }, onEnd: {

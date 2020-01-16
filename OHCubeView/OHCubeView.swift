@@ -520,16 +520,12 @@ import ValueAnimator
         
         xOffset = scrollView.contentOffset.x
         svWidth = scrollView.frame.width
-        var scalePosition3 = 1 - xOffset/svWidth
-        var reversedScalePosition3 = xOffset/svWidth
-        
+
         var currentOffsetPage = (xOffset - CGFloat(page) * svWidth)/svWidth
         var scalePosition = 1 - currentOffsetPage
         var reversedScalePosition = xOffset/svWidth
-        
-        print("------page-------")
-        print(page)
         var transform = CGAffineTransform.identity
+        // current and reset other
         for index in 0 ..< childViews.count {
             let view = childViews[index]
             transform.tx = 0
@@ -539,6 +535,7 @@ import ValueAnimator
             view.transform = transform
             view.layer.zPosition = 1
         }
+        // pre
         if page + 1 < childViews.count {
             let view = childViews[page + 1]
             let minimumScale = CGFloat(0.5)
@@ -557,6 +554,7 @@ import ValueAnimator
             view.transform = transform
             view.layer.zPosition = 0
         }
+        // next
         if page - 1 >= 0 {
             let view = childViews[page - 1]
             let minimumScale = CGFloat(0.5)
@@ -575,10 +573,6 @@ import ValueAnimator
             view.transform = transform
             view.layer.zPosition = 0
         }
-       
-        // TODO:
-        //            view.zIndex = zIndex
-
     }
     
     fileprivate func applyShadowForView(_ view: UIView, index: Int) {

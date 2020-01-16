@@ -478,6 +478,41 @@ import ValueAnimator
         if (!enableTransform) {
             return
         }
+        transformViewsInScrollView1(scrollView)
+//        var xOffset = scrollView.contentOffset.x
+//        var svWidth = scrollView.frame.width
+//        let childc = CGFloat(childViews.count)
+//
+//        xOffset = scrollView.contentOffset.x
+//        svWidth = scrollView.frame.width
+//        var deg = maxAngle / bounds.size.width * xOffset
+//
+//        for index in 0 ..< childViews.count {
+//
+//            let view = childViews[index]
+//
+//            deg = index == 0 ? deg : deg - maxAngle
+//            let rad = deg * CGFloat(Double.pi / 180)
+//
+//            var transform = CATransform3DIdentity
+//            transform.m34 = 1 / svWidth
+//            transform = CATransform3DRotate(transform, rad, 0, 1, 0)
+//
+//            view.layer.transform = transform
+//
+//            var x = xOffset / svWidth > CGFloat(index) ? 1.0 : 0.0
+//
+//            setAnchorPoint(CGPoint(x: x, y: 0.5), forView: view)
+//
+//            applyShadowForView(view, index: index)
+//        }
+    }
+    
+    fileprivate func transformViewsInScrollView1(_ scrollView: UIScrollView) {
+        updateUnscrollableViewItems()
+        if (!enableTransform) {
+            return
+        }
         
         var xOffset = scrollView.contentOffset.x
         var svWidth = scrollView.frame.width
@@ -485,27 +520,65 @@ import ValueAnimator
         
         xOffset = scrollView.contentOffset.x
         svWidth = scrollView.frame.width
-        var deg = maxAngle / bounds.size.width * xOffset
+        var scalePosition3 = 1 - xOffset/svWidth
+        var reversedScalePosition3 = xOffset/svWidth
         
+        var currentOffsetPage = (xOffset - CGFloat(page) * svWidth)/svWidth
+        var scalePosition = 1 - currentOffsetPage
+        var reversedScalePosition = xOffset/svWidth
+        
+        print("------page-------")
+        print(page)
+        var transform = CGAffineTransform.identity
         for index in 0 ..< childViews.count {
-            
             let view = childViews[index]
-            
-            deg = index == 0 ? deg : deg - maxAngle
-            let rad = deg * CGFloat(Double.pi / 180)
-            
-            var transform = CATransform3DIdentity
-            transform.m34 = 1 / svWidth
-            transform = CATransform3DRotate(transform, rad, 0, 1, 0)
-            
-            view.layer.transform = transform
-            
-            var x = xOffset / svWidth > CGFloat(index) ? 1.0 : 0.0
-            
-            setAnchorPoint(CGPoint(x: x, y: 0.5), forView: view)
-            
-            applyShadowForView(view, index: index)
+            transform.tx = 0
+            transform.a = 1
+            transform.d = 1
+            view.alpha = alpha
+            view.transform = transform
+            view.layer.zPosition = 1
         }
+        if page + 1 < childViews.count {
+            let view = childViews[page + 1]
+            let minimumScale = CGFloat(0.5)
+            var zIndex = 0
+            var alpha: CGFloat = 0.0
+            let position = scalePosition
+            let itemSpacing = svWidth
+            alpha = CGFloat(1.0) - position
+            transform.tx = itemSpacing * -position
+            print(itemSpacing * -position)
+            let scaleFactor = minimumScale + (1.0 - minimumScale) * (1.0 - abs(position))
+            transform.a = scaleFactor
+            transform.d = scaleFactor
+            zIndex = 0
+            view.alpha = alpha
+            view.transform = transform
+            view.layer.zPosition = 0
+        }
+        if page - 1 >= 0 {
+            let view = childViews[page - 1]
+            let minimumScale = CGFloat(0.5)
+            var zIndex = 0
+            var alpha: CGFloat = 0.0
+            let position = reversedScalePosition
+            let itemSpacing = svWidth
+            alpha = CGFloat(1.0) - position
+            transform.tx = itemSpacing * position
+            print(itemSpacing * -position)
+            let scaleFactor = minimumScale + (1.0 - minimumScale) * (1.0 - abs(position))
+            transform.a = scaleFactor
+            transform.d = scaleFactor
+            zIndex = 0
+            view.alpha = alpha
+            view.transform = transform
+            view.layer.zPosition = 0
+        }
+       
+        // TODO:
+        //            view.zIndex = zIndex
+
     }
     
     fileprivate func applyShadowForView(_ view: UIView, index: Int) {

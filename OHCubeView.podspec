@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name           = "OHCubeView"
-  s.version        = "1.0.1"
+  s.version        = "1.0.4"
   s.summary        = "UIScrollView subclass. Inspired by the Instagram Stories cube."
 
   # This description is used to generate tags and improve search results.
@@ -131,5 +131,6 @@ paging between stories has a 3D cube animation.
 
   # s.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
   # s.dependency "JSONKit", "~> 1.4"
-
+  s.dependency "ValueAnimator"
+  s.dependency "PromiseKit"
 end
